@@ -41,7 +41,7 @@ static void compute_window_size(int &w, int &h) {
     h = std::min(1300, (int)(sh * 0.90));
     if (h < 1000) h = std::min(1000, sh);
 
-    w = std::min(std::min(2040, sw), (int)(h * kWindowAspect));
+    w = std::min(std::min(2160, sw), (int)(h * kWindowAspect));
     if (w < kWindowMinWidth) w = std::min(kWindowMinWidth, sw);
 }
 

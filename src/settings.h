@@ -26,6 +26,10 @@ public:
     int         get_int(const std::string &key, int fallback) const;
     double      get_double(const std::string &key, double fallback) const;
     bool        get_bool(const std::string &key, bool fallback) const;
+    // Whether the key is present at all. `key = ` (present but empty) and a key
+    // that was never written are different things for values where empty is a
+    // meaningful setting, such as -l in Z-Image (empty means auto).
+    bool        has(const std::string &key) const { return find(key) != nullptr; }
 
     void set(const std::string &key, const std::string &value);
     void set_int(const std::string &key, int value);

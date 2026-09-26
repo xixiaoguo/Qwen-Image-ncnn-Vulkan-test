@@ -92,7 +92,11 @@ private:
     Fl_Button *m_up = nullptr;
     Fl_Button *m_home = nullptr;
     Fl_File_Browser *m_browser = nullptr;
+    // File name for each list row: the row text now also carries format and
+    // size, so the name cannot be read back out of it reliably.
+    std::vector<std::string> m_rows;
     ImagePane *m_preview = nullptr;    // thumbnail of the highlighted image
+    Fl_Box *m_preview_info = nullptr;  // resolution / format / size under it
     Fl_Box *m_name_label = nullptr;
     Fl_Input *m_name = nullptr;
     Fl_Button *m_ok = nullptr;

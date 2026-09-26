@@ -64,8 +64,11 @@ std::vector<Preset> load_presets(const Settings &cfg, const std::string &key,
         p.name = cfg.get(pre + "_name", "");
         if (p.name.empty()) continue;      // a hole in the numbering: skip it
         for (const std::string &f : fields) {
-            const std::string v = cfg.get(pre + "_" + f, "");
-            if (!v.empty()) p.fields.emplace_back(f, v);
+            // Keep a field that is present but empty: for some of them empty is
+            // the meaningful value (Z-Image's -l) and dropping it here would
+            // quietly turn "auto" into "leave whatever was there".
+            const std::string k = pre + "_" + f;
+            if (cfg.has(k)) p.fields.emplace_back(f, cfg.get(k, ""));
         }
         out.push_back(std::move(p));
     }
@@ -104,6 +107,21 @@ void cb_name_ok(Fl_Widget *, void *data) {
 
 void cb_name_cancel(Fl_Widget *, void *data) {
     static_cast<NameDialog *>(data)->win->hide();
+}
+
+struct ConfirmDialog {
+    Fl_Double_Window *win = nullptr;
+    bool accepted = false;
+};
+
+void cb_confirm_ok(Fl_Widget *, void *data) {
+    auto *dlg = static_cast<ConfirmDialog *>(data);
+    dlg->accepted = true;
+    dlg->win->hide();
+}
+
+void cb_confirm_cancel(Fl_Widget *, void *data) {
+    static_cast<ConfirmDialog *>(data)->win->hide();
 }
 
 } // namespace
@@ -159,6 +177,51 @@ bool ask_preset_name(const char *title, const char *label, const char *ok_label,
     const char *text = dlg.input->value();
     const bool got = dlg.accepted && text && *text;
     if (got) value = text;
+    delete dlg.win;
+    return got;
+}
+
+bool ask_confirm(const char *title, const char *message, const char *ok_label,
+                 const char *cancel_label) {
+    const int fs = ui_font_base();
+    const int pad = std::max(10, fs);
+    const int row = fs * 21 / 10;
+    const int w = std::max(380, fs * 30);
+    const int bw = std::max(fs * 5, 76);
+    const int msg_h = row * 2;
+    const int h = pad + msg_h + row + pad + row + pad;
+
+    ConfirmDialog dlg;
+    dlg.win = new Fl_Double_Window(w, h, title);
+    dlg.win->set_modal();
+
+    Fl_Box *msg = new Fl_Box(pad, pad, w - 2 * pad, msg_h, message);
+    msg->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
+    msg->labelsize(fs);
+
+    // Plain Fl_Button on purpose: Fl_Return_Button draws a return-arrow glyph,
+    // which is exactly what made the fl_choice() version look out of place.
+    Fl_Button *ok = new Fl_Button(w - pad - bw, h - pad - row, bw, row, ok_label);
+    ok->labelsize(fs);
+    ok->callback(cb_confirm_ok, &dlg);
+
+    Fl_Button *cancel = new Fl_Button(w - pad - bw - pad - bw, h - pad - row, bw, row,
+                                      cancel_label ? cancel_label : tr(Str::PickerCancel));
+    cancel->labelsize(fs);
+    cancel->shortcut(FL_Escape);
+    cancel->callback(cb_confirm_cancel, &dlg);
+
+    dlg.win->end();
+    dlg.win->callback(cb_confirm_cancel, &dlg);   // closing the window cancels
+
+    if (Fl_Window *parent = Fl::first_window())
+        dlg.win->position(parent->x() + (parent->w() - w) / 2,
+                          parent->y() + (parent->h() - h) / 3);
+
+    dlg.win->show();
+    while (dlg.win->shown()) Fl::wait();
+
+    const bool got = dlg.accepted;
     delete dlg.win;
     return got;
 }

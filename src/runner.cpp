@@ -37,15 +37,42 @@ std::vector<std::string> build_argv(const std::string &exe, const GenOptions &op
     a.push_back(exe);
     if (!opt.prompt.empty()) { a.push_back("-p"); a.push_back(opt.prompt); }
     if (!opt.negative_prompt.empty()) { a.push_back("-n"); a.push_back(opt.negative_prompt); }
-    a.push_back("-w"); a.push_back(num(opt.cfg_scale));
+
+    if (opt.backend != Backend::ZImage) {
+        // qwenimage-ncnn-vulkan: -w is the true CFG scale and is always sent,
+        // because the negative prompt only takes effect when it is above 1.
+        a.push_back("-w"); a.push_back(num(opt.cfg_scale));
+        a.push_back("-o"); a.push_back(opt.output_path);
+        for (const auto &in : opt.inputs) { a.push_back("-i"); a.push_back(in); }
+        a.push_back("-s");
+        a.push_back(std::to_string(opt.width) + "," + std::to_string(opt.height));
+        a.push_back("-l"); a.push_back(std::to_string(opt.steps));
+        a.push_back("-r"); a.push_back(std::to_string(opt.seed));
+        a.push_back("-m"); a.push_back(opt.model_path);
+        // -g: omit when auto
+        if (opt.gpu_id != INT_MAX) { a.push_back("-g"); a.push_back(std::to_string(opt.gpu_id)); }
+        a.push_back("-b"); a.push_back(std::to_string(opt.batch));
+        return a;
+    }
+
+    // zimage-ncnn-vulkan.
     a.push_back("-o"); a.push_back(opt.output_path);
     for (const auto &in : opt.inputs) { a.push_back("-i"); a.push_back(in); }
+    if (!opt.mask_path.empty())    { a.push_back("-k"); a.push_back(opt.mask_path); }
+    if (!opt.outpaint.empty())     { a.push_back("-x"); a.push_back(opt.outpaint); }
+    if (!opt.control_path.empty()) {
+        a.push_back("-c"); a.push_back(opt.control_path);
+        // -w is the ControlNet scale here and only means anything next to a
+        // control image, so it rides along with -c instead of always being sent.
+        a.push_back("-w"); a.push_back(num(opt.control_scale));
+    }
+    if (opt.tile_upscale) a.push_back("-t");
     a.push_back("-s");
     a.push_back(std::to_string(opt.width) + "," + std::to_string(opt.height));
-    a.push_back("-l"); a.push_back(std::to_string(opt.steps));
+    // steps == 0 means "auto": leave -l out and let the model pick.
+    if (opt.steps > 0) { a.push_back("-l"); a.push_back(std::to_string(opt.steps)); }
     a.push_back("-r"); a.push_back(std::to_string(opt.seed));
     a.push_back("-m"); a.push_back(opt.model_path);
-    // -g: omit when auto
     if (opt.gpu_id != INT_MAX) { a.push_back("-g"); a.push_back(std::to_string(opt.gpu_id)); }
     a.push_back("-b"); a.push_back(std::to_string(opt.batch));
     return a;

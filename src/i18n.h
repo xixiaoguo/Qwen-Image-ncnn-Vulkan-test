@@ -15,9 +15,11 @@ enum class Lang {
 // lookup falls back to the key text so it degrades gracefully).
 enum class Str {
     AppTitle,
+    AppTitleZImage,
 
     // top bar
     Language,
+    Backend,
 
     // paths
     Binary,
@@ -30,7 +32,24 @@ enum class Str {
 
     // prompt
     PromptRequired,
+    PromptPlain,
     NegativeOptional,
+
+    // placeholder text for the empty input fields
+    HintPrompt,
+    HintNegative,
+    HintOutputDir,
+    HintOutputName,
+    HintOutpaint,
+    HintRefImages,
+    HintZInputInpaint,
+    HintZInputOutpaint,
+    HintMask,
+    HintControl,
+    HintLowRes,
+    HintControlSize,
+    HintInpaintSize,
+    HintOutpaintSize,
 
     // numeric / options
     Cfg,
@@ -48,17 +67,43 @@ enum class Str {
 
     // reference images
     RefImages,
+    RefImagesZImage,
+    MaskImage,
+    MaskHint,
+    ControlImage,
+    ControlImageTile,
+    ControlScale,
+    TileUpscale,
+    Outpaint,
+    OutpaintHint,
     AddImage,
     RemoveSelected,
 
-    // preview toolbar
+    // Z-Image working modes: each one passes a different subset of options
+    ZModel,
+    ZMode,
+    ZModeText,
+    ZModeInpaint,
+    ZModeOutpaint,
+    ZModeControl,
+    ZModeTile,
+    ZImageInput,
+    ZTileHint,
+
+    // preview toolbar (grid / detail)
     PreviewLatest,
     Reload,
     OpenOutputDir,
+    GalleryBack,
+    About,
     Fit,
     ZoomIn,
     ZoomOut,
     Zoom1to1,
+    GalleryEmpty,
+    GalleryUnreadable,
+    LogGalleryOpened,
+    LogGalleryRefreshed,
 
     // actions
     Generate,
@@ -69,11 +114,13 @@ enum class Str {
     Running,
     Done,
     Failed,
+    Stopped,
     ReadyHint,
     OptionsHint,
 
     // dialogs - titles
     SelectRefImages,
+    SelectInputImage,
     OutputImage,
     ModelDir,
     ChooseBinary,
@@ -93,16 +140,29 @@ enum class Str {
 
     // dialogs - messages
     MaxRefImages,
+    MaxRefImagesZImage,
     ErrPromptRequired,
     ErrCfg,
+    ErrControlScale,
     ErrOutput,
     ErrOutputDir,
     ErrModel,
     ErrSizePositive,
     ErrSizeMultiple,
     ErrSteps,
+    ErrStepsAuto,
+    ErrSizeTooSmall,
+    ErrSizeTooLarge,
+    ErrOutpaintTooLarge,
+    SizeAutoComputed,
     ErrBatch,
     ErrTooManyImages,
+    ErrTileNeedsControl,
+    ErrOutpaintFormat,
+    ErrZInputNeeded,
+    ErrZMaskNeeded,
+    ErrZOutpaintNeeded,
+    ErrZControlNeeded,
     ErrExitCode,
     StopSent,
     StopNoProcess,
@@ -114,6 +174,8 @@ enum class Str {
     LogPreviewNotFound,
     LogDone,
     LogFailed,
+    LogStopped,
+    LogZModelNoControl,
     InitBinary,
     InitModel,
     InitConfig,
@@ -122,6 +184,7 @@ enum class Str {
     PreviewOutputTitle,
     TextToImage,
     ImageEditing,
+    OptionsHintZImage,
 
     // named presets
     NamedPreset,
@@ -133,6 +196,8 @@ enum class Str {
     PresetRenameTitle,
     PresetNameLabel,
     PresetDeleteAsk,
+    PresetOverwrite,
+    PresetOverwriteAsk,
     PresetNeedSelection,
     PresetSaved,
     PresetApplied,

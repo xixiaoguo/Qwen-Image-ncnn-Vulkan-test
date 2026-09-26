@@ -92,7 +92,7 @@ bool Settings::save() {
         return false;
     }
 
-    out << "# qwenimage-gui settings - written automatically, safe to edit\n";
+    out << "# Image-ncnn-Vulkan-UI settings - written automatically, safe to edit\n";
     for (const auto &kv : m_items)
         out << kv.first << " = " << escape(kv.second) << "\n";
 

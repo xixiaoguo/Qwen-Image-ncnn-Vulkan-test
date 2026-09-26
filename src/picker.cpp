@@ -1,6 +1,7 @@
 // picker.cpp - self-drawn file / directory chooser
 #include "picker.h"
 #include "i18n.h"
+#include "image_info.h"
 #include "ui_main.h"   // ui_font_base(): the dialog follows the main window's scale
 
 #include <FL/Fl.H>
@@ -205,10 +206,18 @@ void Picker::build() {
     m_browser->callback(cb_browser, this);
 
     if (!m_dir_mode) {
-        m_preview = new ImagePane(pad + list_w + gap, list_y,
-                                  W - 2 * pad - list_w - gap, list_h);
+        const int info_h = std::max(16, fnt + 6);
+        const int pw = W - 2 * pad - list_w - gap;
+        m_preview = new ImagePane(pad + list_w + gap, list_y, pw, list_h - info_h - gap);
         m_preview->box(FL_DOWN_BOX);
         m_preview->color(FL_WHITE);
+
+        // "1920 x 1080 · PNG · 3.4 MB" for the highlighted file.
+        m_preview_info = new Fl_Box(FL_NO_BOX, pad + list_w + gap,
+                                    list_y + list_h - info_h, pw, info_h, "");
+        m_preview_info->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+        m_preview_info->labelsize(fnt);
+        m_preview_info->labelcolor(FL_DARK3);
     }
 
     // ---- bottom: optional file-name field, then the action buttons ----
@@ -250,14 +259,8 @@ std::string Picker::full_path(const char *name) const {
 // Row text with the folder glyph stripped: the list shows "\xF0\x9F\x93\x81 name"
 // for directories, which must never end up inside a path.
 std::string Picker::list_name(int row) const {
-    if (!m_browser || row <= 0) return "";
-    const char *t = m_browser->text(row);
-    if (!t) return "";
-
-    std::string name(t);
-    const std::string icon(kFolderIcon);
-    if (name.rfind(icon, 0) == 0) name = name.substr(icon.size());
-    return name;
+    if (row <= 0 || row > (int)m_rows.size()) return "";
+    return m_rows[row - 1];
 }
 
 std::string Picker::picked_name() const {
@@ -330,10 +333,25 @@ void Picker::refresh_list() {
     std::sort(dirs.begin(), dirs.end());
     std::sort(files.begin(), files.end());
 
-    for (const std::string &n : dirs)
-        m_browser->add((std::string(kFolderIcon) + n).c_str());
-    for (const std::string &n : files)
-        m_browser->add(n.c_str());
+    // The row text carries format and size, which means the plain name can no
+    // longer be read back out of it - so the names live in a side table indexed
+    // by row, and list_name() consults that instead.
+    m_rows.clear();
+    for (const std::string &n : dirs) {
+        m_rows.push_back(n);
+        m_browser->Fl_Browser::add((std::string(kFolderIcon) + n).c_str());
+    }
+    for (const std::string &n : files) {
+        m_rows.push_back(n);
+        const ImageInfo info = image_info(m_dir + "/" + n);
+        char line[512];
+        if (info.valid())
+            std::snprintf(line, sizeof(line), "%s    %s   %s", n.c_str(),
+                          info.format.c_str(), human_size(info.bytes).c_str());
+        else
+            std::snprintf(line, sizeof(line), "%s", n.c_str());
+        m_browser->Fl_Browser::add(line);
+    }
 
     m_browser->redraw();
 }
@@ -344,12 +362,22 @@ void Picker::update_preview() {
 
     // Load at full size; ImagePane scales it to fit without distorting it.
     Fl_Shared_Image *img = nullptr;
+    std::string full;
     const std::string name = picked_name();
     if (!name.empty()) {
-        const std::string full = full_path(name.c_str());
+        full = full_path(name.c_str());
         if (!path_is_dir(full)) img = Fl_Shared_Image::get(full.c_str());
     }
     m_preview->set_image(img);   // takes ownership (may be null)
+
+    // Resolution, format and size of whatever is highlighted - read from the
+    // header, so it costs nothing even for a large picture.
+    if (m_preview_info) {
+        std::string text;
+        if (!full.empty() && !path_is_dir(full)) text = image_info_text(full);
+        m_preview_info->copy_label(text.c_str());
+        m_preview_info->redraw();
+    }
 }
 
 void Picker::go_up() {

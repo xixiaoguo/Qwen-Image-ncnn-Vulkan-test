@@ -58,3 +58,9 @@ void save_presets(Settings &cfg, const std::string &key,
 // cancels or leaves the field empty.
 bool ask_preset_name(const char *title, const char *label, const char *ok_label,
                      std::string &value);
+
+// Modal yes/no question, also drawn by this application. fl_choice() is not
+// used because its first button is a Fl_Return_Button, and the return-arrow
+// glyph it draws looks out of place next to plain buttons.
+bool ask_confirm(const char *title, const char *message, const char *ok_label,
+                 const char *cancel_label);
