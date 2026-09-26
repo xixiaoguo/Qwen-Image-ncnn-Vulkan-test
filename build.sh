@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build qwenimage-gui on Kubuntu 26.04
+# Build Image-ncnn-Vulkan-UI on Kubuntu 26.04
 set -e
 
 echo "==> checking build dependencies"
@@ -95,5 +95,5 @@ echo "==> building"
 cmake --build "$(dirname "$0")/build" -j"$(nproc)"
 
 echo
-echo "Build finished: $(dirname "$0")/build/qwenimage-gui"
-echo "Run it with:   ./build/qwenimage-gui"
+echo "Build finished: $(dirname "$0")/build/Image-ncnn-Vulkan-UI"
+echo "Run it with:   ./build/Image-ncnn-Vulkan-UI"
