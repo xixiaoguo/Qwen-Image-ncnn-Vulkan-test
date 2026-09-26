@@ -37,6 +37,14 @@ BackendAvailability detect_backends(const std::string &app_dir) {
     return a;
 }
 
+Backend pick_start_backend(const BackendAvailability &avail, const std::string &stored) {
+    if (avail.qwen && !avail.zimage)  return Backend::Qwen;
+    if (avail.zimage && !avail.qwen)  return Backend::ZImage;
+    if (stored == "zimage")           return Backend::ZImage;
+    if (stored == "qwen")             return Backend::Qwen;
+    return Backend::Qwen;             // nothing installed, nothing remembered
+}
+
 std::string resolve_model_path(const std::string &app_dir, Backend b,
                                const char *model_name) {
     // The layouts that show up in practice, most likely first:

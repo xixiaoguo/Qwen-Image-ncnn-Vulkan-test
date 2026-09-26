@@ -35,6 +35,12 @@ struct BackendAvailability {
 
 BackendAvailability detect_backends(const std::string &app_dir);
 
+// Which engine to open on. A binary that is actually installed outranks the
+// stored choice: if only one generator is present, that is the one the window
+// has to talk to - a config written back when both were installed must not pin
+// the window to a program that is no longer there.
+Backend pick_start_backend(const BackendAvailability &avail, const std::string &stored);
+
 // Model folder to hand to -m: the first candidate that exists under app_dir,
 // otherwise the conventional one. The conventional path is returned even when
 // it is missing, so a failure names the location the program expects.

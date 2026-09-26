@@ -339,18 +339,10 @@ MainWindow::MainWindow(int W, int H, const char *L)
     m_settings = std::make_unique<Settings>(cfg_path);
     m_settings->load();
 
-    // Which engine to open on. With only one binary installed there is nothing
-    // to choose: the window pins itself to it and never shows the switcher.
-    // With both (or neither) the stored choice wins, and the default is Qwen,
-    // which is what this program grew out of.
-    {
-        Backend start = Backend::Qwen;
-        const std::string stored = m_settings->get("backend", "");
-        if (stored == "zimage")      start = Backend::ZImage;
-        else if (stored == "qwen")   start = Backend::Qwen;
-        else if (m_avail.zimage && !m_avail.qwen) start = Backend::ZImage;
-        m_backend = start;
-    }
+    // Which engine to open on. What is installed decides first: a lone binary
+    // wins outright, and only when both (or neither) are present does the
+    // stored choice get a say - see pick_start_backend().
+    m_backend = pick_start_backend(m_avail, m_settings->get("backend", ""));
     m_exe_path   = m_app_dir + "/" + backend_spec(m_backend).exe_name;
     m_model_path = resolve_model_path(m_app_dir, m_backend);
 
