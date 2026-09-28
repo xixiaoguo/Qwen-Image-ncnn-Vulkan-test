@@ -28,6 +28,7 @@ add_executable(Image-ncnn-Vulkan-UI
     src/ui_main.cpp
     src/runner.cpp
     src/image_info.cpp
+    src/image_save.cpp
     src/backend.cpp
     src/gallery.cpp
     src/image_viewer.cpp
@@ -37,7 +38,7 @@ add_executable(Image-ncnn-Vulkan-UI
 )
 
 target_include_directories(Image-ncnn-Vulkan-UI PRIVATE src)
-target_link_libraries(Image-ncnn-Vulkan-UI PRIVATE ${FLTK_LIBRARIES} Threads::Threads)
+target_link_libraries(Image-ncnn-Vulkan-UI PRIVATE ${FLTK_LIBRARIES} Threads::Threads ${CMAKE_DL_LIBS})
 
 if(UNIX AND NOT APPLE)
     find_package(PkgConfig QUIET)
@@ -47,6 +48,16 @@ if(UNIX AND NOT APPLE)
             target_include_directories(Image-ncnn-Vulkan-UI PRIVATE ${PNG_INCLUDE_DIRS})
             target_link_libraries(Image-ncnn-Vulkan-UI PRIVATE ${PNG_LIBRARIES})
             target_compile_definitions(Image-ncnn-Vulkan-UI PRIVATE HAVE_LIBPNG=1)
+        endif()
+
+        # WebP is optional, like libpng: with it, webp pictures show up in the
+        # preview and can serve as inpaint/outpaint inputs. Without it they are
+        # still listed and their size still reads from the file header.
+        pkg_check_modules(WEBP QUIET libwebp)
+        if(WEBP_FOUND)
+            target_include_directories(Image-ncnn-Vulkan-UI PRIVATE ${WEBP_INCLUDE_DIRS})
+            target_link_libraries(Image-ncnn-Vulkan-UI PRIVATE ${WEBP_LIBRARIES})
+            target_compile_definitions(Image-ncnn-Vulkan-UI PRIVATE HAVE_LIBWEBP=1)
         endif()
 
         # FLTK 1.4's own headers pull in <cairo.h>, but its cmake package does
@@ -63,3 +74,4 @@ endif()
 if(FLTK_INCLUDE_DIRS)
     target_include_directories(Image-ncnn-Vulkan-UI PRIVATE ${FLTK_INCLUDE_DIRS})
 endif()
+
